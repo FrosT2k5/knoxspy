@@ -84,7 +84,13 @@ async function compileFridaAgent(folderPath: string): Promise<void> {
 router.get("/connected", async (req: Request, res: Response) => {
 	console.log("Checking active session");
 	const activeSession = wsManager.getActiveSession();
-	return res.status(200).json(activeSession);
+	if (activeSession) {
+		return res.status(200).json({
+			status: activeSession.status,
+			app: activeSession.app
+		});
+	}
+	return res.status(200).json({ status: false, app: null });
 });
 
 router.post("/sync/selection", async (req: Request, res: Response) => {
@@ -93,7 +99,7 @@ router.post("/sync/selection", async (req: Request, res: Response) => {
 		return res.status(400).json({ status: false, message: "No selection data provided" });
 	}
 	wsManager.setSelection(selectionData);
-	
+
 	return res.status(200).json({
 		status: true,
 		message: "Selection data synced successfully"
@@ -222,9 +228,8 @@ router.post(
 			console.error("Error setting up library:", error);
 			return res.status(500).json({
 				status: false,
-				message: `Error setting up library: ${
-					error instanceof Error ? error.message : String(error)
-				}`,
+				message: `Error setting up library: ${error instanceof Error ? error.message : String(error)
+					}`,
 			});
 		}
 	}

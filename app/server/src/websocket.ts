@@ -803,11 +803,12 @@ class WebSocketClient {
 			// Find the process
 			const deviceId = activeSession.app.deviceId;
 			const appName = activeSession.app.name;
+			const appId = activeSession.app.id;
 			console.log("Searching for process", deviceId, appName);
 			let processes = [];
 			
 			if(platform.toLowerCase() === "android") {
-				processes = await fridaManager.findProcessPidsByUid(deviceId, appName, parseInt(user));
+				processes = await fridaManager.findProcessPidsByUid(deviceId, appId, parseInt(user));
 				console.log("Found PIDs", processes);
 			} else {
 				processes = await fridaManager.findProcesses(
@@ -821,7 +822,21 @@ class WebSocketClient {
 				return this.sendError("App not running");
 			}
 
-			const processId = processes[0].pid;
+			let selectedProcess: any = processes[0];
+			if (platform.toLowerCase() === "android") {
+				const scoreProcess = (name: string): number => {
+					if (name === appId) return 0;
+					if (name.startsWith(appId + ":")) return 1;
+					if (name.includes(appId)) return 2;
+					return 3;
+				};
+				const sorted = [...processes].sort((a: any, b: any) => {
+					return scoreProcess(a.name || "") - scoreProcess(b.name || "");
+				});
+				selectedProcess = sorted[0];
+			}
+
+			const processId = selectedProcess.pid;
 
 			// Attach to the app
 			const session = await fridaManager.attachToApp(deviceId, processId);

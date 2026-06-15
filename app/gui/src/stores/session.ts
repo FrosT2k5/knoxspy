@@ -113,6 +113,9 @@ export const useAppStore = defineStore('current_session', {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
                 },
             }).then((response) => response.json()).then((data) => {
                 this.connectedApp = data;
